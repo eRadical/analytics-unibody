@@ -1,0 +1,7 @@
+---
+
+# @todo add the posibility of using the stock nginx
+unibody_nginx_from_os: false
+
+# Download source code from http://nginx.org/en/download.html
+unibody_nginx_version: 1.15.1

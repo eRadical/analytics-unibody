@@ -1,0 +1,15 @@
+---
+
+- name: Create folder structure
+  file:
+    path: /root/unibody
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Download nginx source file
+  get_url:
+    url: "http://nginx.org/download/nginx-{{ unibody_nginx_version }}.tar.gz"
+    dest: /root/unibody/nginx
+    mode: 0644
