@@ -11,5 +11,19 @@
 - name: Download nginx source file
   get_url:
     url: "http://nginx.org/download/nginx-{{ unibody_nginx_version }}.tar.gz"
-    dest: /root/unibody/nginx
+    dest: /root/unibody/nginx-{{ unibody_nginx_version }}.tar.gz
     mode: 0644
+    force: no
+
+- name: Unarchive nginx-{{ unibody_nginx_version }}.tar.gz file
+  unarchive:
+    src: "/root/unibody/nginx-{{ unibody_nginx_version }}.tar.gz"
+    dest: /root/unibody
+    remote_src: yes
+    creates: "/root/unibody/nginx-{{ unibody_nginx_version }}"
+
+- name: Clone repo for GeoIP2
+  git:
+    repo: https://github.com/leev/ngx_http_geoip2_module.git
+    dest: /root/unibody/ngx_http_geoip2_module
+    update: yes

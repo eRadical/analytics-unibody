@@ -1,0 +1,22 @@
+---
+
+- name: install the 'development' environment group
+  yum:
+    name: "@^development"
+    state: present
+
+- name: install required packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - gtar
+  - pcre-devel
+  - openssl-devel
+  - libxml2-devel
+  - libxslt-devel
+  - gd-devel
+  - gperftools-libs
+  - gperftools-devel
+  - libmaxminddb
+  - libmaxminddb-devel

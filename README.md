@@ -6,8 +6,7 @@ Ansible role that sets up a farm of analytics collectors based on nginx
 Requirements
 ------------
 
-Executables on the target machine: gtar
-
+On the target machine: EPEL repo already installed
 
 Role Variables
 --------------
