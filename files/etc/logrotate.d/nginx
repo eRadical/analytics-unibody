@@ -1,0 +1,11 @@
+/var/log/nginx/access.log /var/log/nginx/error.log {
+    daily
+    rotate 10
+    missingok
+    notifempty
+    compress
+    sharedscripts
+    postrotate
+        pkill -USR1 nginx -U 0;
+    endscript
+}

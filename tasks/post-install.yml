@@ -1,0 +1,51 @@
+---
+- name: Ensure group {{ unibody_nginx_group }} exists
+  group:
+    name: "{{ unibody_nginx_group }}"
+    state: present
+    system: yes
+
+- name: Ensure user {{ unibody_nginx_user }} exists
+  user:
+    name: "{{ unibody_nginx_user }}"
+    comment: "Analytics Unibody User"
+    group: "{{ unibody_nginx_group }}"
+    create_home: no
+    system: yes
+    shell: /usr/bin/false
+
+- name: Create needed dirs - phase 1
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+  with_items:
+    - /etc/nginx
+    - /etc/nginx/ssl
+
+- name: Create needed dirs - phase 2
+  file:
+    path: "{{ item }}"
+    owner: "{{ unibody_nginx_user }}"
+    group: "{{ unibody_nginx_group }}"
+    mode: 0700
+    state: directory
+  with_items:
+    - /var/lib/nginx
+    - /var/lib/nginx/tmp
+    - /var/lib/nginx/tmp/client_body
+    - /var/lib/nginx/tmp/proxy
+    - /var/lib/nginx/tmp/fastcgi
+    - /var/lib/nginx/tmp/uwsgi
+    - /var/lib/nginx/tmp/scgi
+    - /var/log/nginx
+
+- name: Copy logrotate
+  file:
+    src: etc/logrotate.d/nginx
+    dest: /etc/logrotate.d/nginx
+    group: root
+    owner: root
+    mode: 0644

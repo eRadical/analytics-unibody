@@ -2,7 +2,7 @@
 
 - name: Create folder structure
   file:
-    path: /root/unibody
+    path: "{{ unibody_work_dir }}"
     state: directory
     owner: root
     group: root
@@ -10,20 +10,46 @@
 
 - name: Download nginx source file
   get_url:
-    url: "http://nginx.org/download/nginx-{{ unibody_nginx_version }}.tar.gz"
-    dest: /root/unibody/nginx-{{ unibody_nginx_version }}.tar.gz
+    url: "{{ nginx_download_url }}"
+    dest: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}.tar.gz"
     mode: 0644
     force: no
 
 - name: Unarchive nginx-{{ unibody_nginx_version }}.tar.gz file
   unarchive:
-    src: "/root/unibody/nginx-{{ unibody_nginx_version }}.tar.gz"
-    dest: /root/unibody
+    src: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}.tar.gz"
+    dest: "{{ unibody_work_dir }}"
     remote_src: yes
-    creates: "/root/unibody/nginx-{{ unibody_nginx_version }}"
+    creates: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}"
 
 - name: Clone repo for GeoIP2
   git:
-    repo: https://github.com/leev/ngx_http_geoip2_module.git
-    dest: /root/unibody/ngx_http_geoip2_module
+    repo: "{{ nginx_http_geoip2_module }}"
+    dest: "{{ unibody_work_dir }}/ngx_http_geoip2_module"
     update: yes
+
+- name: Transfer configure file
+  template:
+    src: my_nginx.j2
+    dest: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}/my_nginx"
+    owner: root
+    group: root
+    mode: 0750
+
+- name: Configure Nginx {{ unibody_nginx_version }}
+  command: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}/my_nginx"
+  args:
+    chdir: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}"
+    creates: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}/Makefile"
+
+- name: Compile Nginx {{ unibody_nginx_version }}
+  command: "make -j{{ nginx_make_jobs }}"
+  args:
+    chdir: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}"
+    creates: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}/objs/nginx"
+
+- name: Install Nginx {{ unibody_nginx_version }}
+  command: "make install"
+  args:
+    chdir: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}"
+    creates: "/usr/sbin/nginx"

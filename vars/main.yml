@@ -1,1 +1,21 @@
 ---
+
+epel_repo_rpm: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+
+unibody_required_packages:
+  - tar
+  - pcre-devel
+  - openssl-devel
+  - libxml2-devel
+  - libxslt-devel
+  - gd-devel
+  - gperftools-libs
+  - gperftools-devel
+  - libmaxminddb
+  - libmaxminddb-devel
+
+nginx_http_geoip2_module: https://github.com/leev/ngx_http_geoip2_module.git
+
+nginx_download_url: "http://nginx.org/download/nginx-{{ unibody_nginx_version }}.tar.gz"
+
+nginx_make_jobs: 8
