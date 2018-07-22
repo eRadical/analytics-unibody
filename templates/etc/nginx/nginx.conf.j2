@@ -1,0 +1,79 @@
+user  {{ unibody_nginx_user }};
+worker_processes  auto;
+worker_rlimit_nofile 50000;
+
+error_log  logs/error.log;
+pid /run/nginx.pid;
+
+events {
+  use                 epoll;
+  worker_connections  8192;
+  multi_accept        on;
+}
+
+http {
+    include       mime.types;
+    default_type  text/plain;
+
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+        '$status $body_bytes_sent "$http_referer" '
+        '"$http_user_agent" "$http_x_forwarded_for"';
+
+    log_format  unibody_analytics '{{ unibody_analytics_nginx_log_format }}';
+    access_log  logs/access.log  main;
+
+    server_tokens off;
+
+    # Load Balancer's internal IPs
+    set_real_ip_from 10.0.0.0/8;
+
+    real_ip_header   X-Cluster-Client-Ip;
+    real_ip_header   X-Forwarded-For;
+    real_ip_recursive on;
+
+    geoip2 /usr/share/GeoIP/GeoIP2-City-Europe.mmdb {
+        $geoip2_city_name city names en;
+        $geoip2_continent_code default=NA continent code;
+        $geoip2_continent_name continent names en;
+        $geoip2_country_code default=NA country iso_code;
+        $geoip2_country_name country names en;
+        $geoip2_lat location latitude;
+        $geoip2_long location longitude;
+        $geoip2_metro_code location metro_code;
+        $geoip2_time_zone location time_zone;
+        $geoip2_state_name subdivisions names names en;
+    }
+    map $remote_addr $anonymized_ip_1 {
+        default 0.0;
+        "~\d+\.\d+\.(?P<ip>(\d+)\.(\d+))"                                 $ip;
+        "~[^:]+\:[^:]+\:(?P<ip>[^:]+\:[^:]+\:[^:]+\:[^:]+\:[^:]+\:[^:]+)" $ip;
+    }
+    map $remote_addr $anonymized_ip_2 {
+        default  "A.B.";
+        "~\d+\.\d+\.\d+\.\d+"                                     "X.Y.";
+        "~[^:]+\:[^:]+\:[^:]+\:[^:]+\:[^:]+\:[^:]+\:[^:]+\:[^:]+" "X:Y:";
+    }
+    map $anonymized_ip_2$anonymized_ip_1 $anonymized_ip {
+        default       0.0.0.0;
+        "~(?P<ip>.*)" $ip;
+    }
+
+    aio                on;
+    sendfile           off;
+    tcp_nopush         off;
+    keepalive_timeout  65;
+
+    large_client_header_buffers 4 12k;
+
+    server {
+        listen       80;
+        server_name  localhost;
+
+        access_log  {{ unibody_analytics_dir }}/latest-events.log unibody_analytics;
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+    }
+}

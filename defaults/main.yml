@@ -6,3 +6,13 @@ unibody_nginx_group: nginx
 unibody_nginx_user: nginx
 
 unibody_work_dir: /root/unibody
+
+unibody_analytics_dir: /analytics
+unibody_analytics_group: analytics
+unibody_analytics_user: analytics
+
+unibody_analytics_rotate_minutes: 10
+unibody_analytics_file_prefix: "events-"
+unibody_analytics_notify_file: "https://unibody-analytics.example.com/collectors-meta"
+
+unibody_analytics_nginx_log_format: "$time_iso8601»$anonymized_ip»$http_referer»$http_user_agent»$geoip2_country_code»$geoip2_state_name»$geoip2_city_name»$geoip2_lat»$geoip2_long»$status»$request_time»$query_string"

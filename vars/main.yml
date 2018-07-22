@@ -13,6 +13,13 @@ unibody_required_packages:
   - gperftools-devel
   - libmaxminddb
   - libmaxminddb-devel
+  - pigz
+  - coreutils
+  - hostname
+  - wget
+  - util-linux
+  - procps-ng
+  - gawk
 
 nginx_http_geoip2_module: https://github.com/leev/ngx_http_geoip2_module.git
 

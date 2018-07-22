@@ -1,1 +1,43 @@
 ---
+
+- name: Ensure group {{ unibody_analytics_group }} exists
+  group:
+    name: "{{ unibody_analytics_group }}"
+    state: present
+    system: yes
+
+- name: Ensure user {{ unibody_analytics_user }} exists
+  user:
+    name: "{{ unibody_analytics_user }}"
+    comment: "Analytics Unibody User"
+    group: "{{ unibody_analytics_group }}"
+    create_home: no
+
+- name: Create needed dirs - phase 3
+  file:
+    path: "{{ item }}"
+    owner: "{{ unibody_analytics_user }}"
+    group: "{{ unibody_analytics_group }}"
+    mode: 0755
+    state: directory
+  with_items:
+    - "{{ unibody_analytics_dir }}"
+    - "{{ unibody_analytics_dir }}/events"
+    - "{{ unibody_analytics_dir }}/events/raw"
+    - "{{ unibody_analytics_dir }}/events/transformed"
+
+- name: Template main nginx file
+  template:
+    src: etc/nginx/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Rotate special log files
+  template:
+    src: rotate-analytics-logs.j2
+    dest: "{{ unibody_analytics_dir }}/rotate-analytics-logs"
+    owner: root
+    group: root
+    mode: 0755

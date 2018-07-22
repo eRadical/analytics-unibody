@@ -12,7 +12,7 @@
     group: "{{ unibody_nginx_group }}"
     create_home: no
     system: yes
-    shell: /usr/bin/false
+    shell: /sbin/nologin
 
 - name: Create needed dirs - phase 1
   file:
@@ -22,7 +22,6 @@
     mode: 0755
     state: directory
   with_items:
-    - /etc/nginx
     - /etc/nginx/ssl
 
 - name: Create needed dirs - phase 2
@@ -36,16 +35,27 @@
     - /var/lib/nginx
     - /var/lib/nginx/tmp
     - /var/lib/nginx/tmp/client_body
-    - /var/lib/nginx/tmp/proxy
-    - /var/lib/nginx/tmp/fastcgi
-    - /var/lib/nginx/tmp/uwsgi
-    - /var/lib/nginx/tmp/scgi
-    - /var/log/nginx
 
 - name: Copy logrotate
-  file:
+  copy:
     src: etc/logrotate.d/nginx
     dest: /etc/logrotate.d/nginx
     group: root
     owner: root
     mode: 0644
+
+- name: Copy SystemD file
+  copy:
+    src: usr/lib/systemd/system/nginx.service
+    dest: /usr/lib/systemd/system/nginx.service
+    group: root
+    owner: root
+    mode: 0644
+
+- name: Make sure nginx starts at boot
+  systemd:
+    name: nginx
+    enabled: yes
+    masked: no
+    daemon_reload: yes
+    state: started

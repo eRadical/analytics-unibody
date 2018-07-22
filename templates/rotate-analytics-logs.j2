@@ -1,0 +1,94 @@
+#!/bin/bash
+
+#
+# Run every {{ unibody_analytics_rotate_minutes }} minutes.
+# */{{ unibody_analytics_rotate_minutes }} * * * * {{ unibody_analytics_dir }}/rotate-analytics-logs.sh
+#
+DEST_EVNT="{{ unibody_analytics_dir }}/events/raw";
+DEST_EVNT_TRANSFORMED="{{ unibody_analytics_dir }}/events/transformed";
+
+SOURCE_EVNT="{{ unibody_analytics_dir }}/latest-events.log";
+
+PREFIX_EVNT="{{ unibody_analytics_file_prefix }}";
+
+NOTIFY="{{ unibody_analytics_notify_file }}"
+
+TRANSFORM_PROGRAM=""
+
+############### If the file is empty skip file creation
+if [ ! -s $SOURCE_EVNT ]
+then
+        >&2 echo "Events file is not there or is empty.";
+        exit 1;
+fi
+
+############### Don't change below
+PREFIX_EVNT="${PREFIX_EVNT}`date --date='10 minutes ago' +%Y%m%d-%H%M`";
+
+PIGZ=$(which pigz);
+HOSTID=$($(which hostid));
+HOSTNAME=$($(which hostname));
+RND=$($(which shuf) -i100000-999999 -n1);	### generate a 6 digit random number
+WGET=$(which wget)
+
+FILE_NAME="${PREFIX_EVNT}_$HOSTID_${HOSTNAME}_$RND"
+FILE_EVNT="$DEST_EVNT/$FILE_NAME";
+
+logger -i --tag rotate-logs "Moving $SOURCE_EVNT to $FILE_EVNT..."
+mv $SOURCE_EVNT $FILE_EVNT;
+logger -i --tag rotate-logs "Moved $SOURCE_EVNT to $FILE_EVNT."
+
+logger -i --tag rotate-logs "Reopening logs..."
+pkill -USR1 nginx -U 0;
+logger -i --tag rotate-logs "Reopened logs."
+
+sleep 2;
+
+logger -i --tag rotate-logs "Processing log $FILE_EVNT, output to $DEST_EVNT_TRANSFORMED"
+$TRANSFORM_PROGRAM $FILE_EVNT $DEST_EVNT_TRANSFORMED
+logger -i --tag rotate-logs "Processed."
+
+FILE_EVNT_LC=$(wc -l $FILE_EVNT | awk '{print $1}')
+DEST_EVNT_TRANSFORMED_LC=$(wc -l ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json | awk '{print $1}')
+
+FILE_EVNT_SIZE_RAW=$(stat --printf="%s" $FILE_EVNT)
+DEST_EVNT_TRANSFORMED_SIZE_RAW=$(stat --printf="%s" ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json)
+
+logger -i --tag rotate-logs "Archiving $FILE_EVNT and ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json ..."
+$PIGZ --best --no-time $FILE_EVNT &
+$PIGZ --best --no-time ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json &
+wait
+logger -i --tag rotate-logs "Archived $FILE_EVNT and ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json "
+
+### Let the AppEngine know what files will be coming over
+FILE_EVNT_SIZE_GZ=$(stat --printf="%s" $FILE_EVNT.gz)
+DEST_EVNT_TRANSFORMED_SIZE_GZ=$(stat --printf="%s" ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json.gz)
+
+FILE_EVNT_HASH=$(md5sum ${FILE_EVNT}.gz | awk '{print $1}')
+DEST_EVNT_TRANSFORMED_HASH=$(md5sum ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json.gz | awk '{print $1}')
+
+### common params
+PARAMS="hostname=$HOSTNAME&hostid=$HOSTID"
+PARAMS+="&f=$FILE_NAME"
+
+### RAW file
+PARAMS+="&fhash=$FILE_EVNT_HASH"
+PARAMS+="&flc=$FILE_EVNT_LC"
+PARAMS+="&fSizeRaw=$FILE_EVNT_SIZE_RAW"
+PARAMS+="&fSizeGz=$FILE_EVNT_SIZE_GZ"
+
+### TRANSFORMED file
+PARAMS+="&thash=$DEST_EVNT_TRANSFORMED_HASH"
+PARAMS+="&tlc=$DEST_EVNT_TRANSFORMED_LC"
+PARAMS+="&tSizeRaw=$DEST_EVNT_TRANSFORMED_SIZE_RAW"
+PARAMS+="&tSizeGz=$DEST_EVNT_TRANSFORMED_SIZE_GZ"
+
+### Send notification to AppEngine
+$WGET -O /dev/null "${NOTIFY}?$PARAMS" &
+
+logger -i --tag rotate-logs "Changing ownership of ${FILE_EVNT}.gz and ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json.gz..."
+chown {{ unibody_analytics_user }}:{{ unibody_analytics_group }} ${FILE_EVNT}.gz;
+chown {{ unibody_analytics_user }}:{{ unibody_analytics_group }} ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json.gz;
+logger -i --tag rotate-logs "Changed ownership of ${FILE_EVNT}.gz and ${DEST_EVNT_TRANSFORMED}/${FILE_NAME}.nl.json.gz"
+
+logger -i --tag rotate-logs "ROTATE-LOGS finished."
