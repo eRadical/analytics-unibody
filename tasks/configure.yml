@@ -26,6 +26,25 @@
     - "{{ unibody_analytics_dir }}/events/raw"
     - "{{ unibody_analytics_dir }}/events/transformed"
 
+- name: Do Geo if it's configured
+  block:
+    - name: Create Geo dir
+      file:
+        path: /etc/nginx/geo
+        owner: "{{ unibody_analytics_user }}"
+        group: "{{ unibody_analytics_group }}"
+        mode: 0755
+        state: directory
+    - name: Copy json file
+      template:
+        src: etc/nginx/geo/find-me.json.j2
+        dest: /etc/nginx/geo/find-me.json
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart nginx
+  when: unibody_geo_service
+
 - name: Template main nginx file
   template:
     src: etc/nginx/nginx.conf.j2
@@ -41,3 +60,11 @@
     owner: root
     group: root
     mode: 0755
+
+- name: Start nginx if it's not already started
+  systemd:
+    name: nginx
+    enabled: yes
+    masked: no
+    daemon_reload: yes
+    state: started

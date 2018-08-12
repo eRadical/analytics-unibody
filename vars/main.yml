@@ -1,6 +1,6 @@
 ---
 
-epel_repo_rpm: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+unibody_epel_repo_rpm: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
 
 unibody_required_packages:
   - tar
@@ -21,8 +21,8 @@ unibody_required_packages:
   - procps-ng
   - gawk
 
-nginx_http_geoip2_module: https://github.com/leev/ngx_http_geoip2_module.git
+unibody_nginx_http_geoip2_module: https://github.com/leev/ngx_http_geoip2_module.git
 
-nginx_download_url: "http://nginx.org/download/nginx-{{ unibody_nginx_version }}.tar.gz"
+unibody_nginx_download_url: "http://nginx.org/download/nginx-{{ unibody_nginx_version }}.tar.gz"
 
-nginx_make_jobs: 8
+unibody_nginx_make_jobs: 8

@@ -7,7 +7,7 @@
 
 - name: Install EPEL
   yum:
-    name: "{{ epel_repo_rpm }}"
+    name: "{{ unibody_epel_repo_rpm }}"
     state: present
 
 - name: install required packages

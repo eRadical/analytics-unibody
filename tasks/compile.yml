@@ -10,7 +10,7 @@
 
 - name: Download nginx source file
   get_url:
-    url: "{{ nginx_download_url }}"
+    url: "{{ unibody_nginx_download_url }}"
     dest: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}.tar.gz"
     mode: 0644
     force: no
@@ -24,7 +24,7 @@
 
 - name: Clone repo for GeoIP2
   git:
-    repo: "{{ nginx_http_geoip2_module }}"
+    repo: "{{ unibody_nginx_http_geoip2_module }}"
     dest: "{{ unibody_work_dir }}/ngx_http_geoip2_module"
     update: yes
 
@@ -43,7 +43,7 @@
     creates: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}/Makefile"
 
 - name: Compile Nginx {{ unibody_nginx_version }}
-  command: "make -j{{ nginx_make_jobs }}"
+  command: "make -j{{ unibody_nginx_make_jobs }}"
   args:
     chdir: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}"
     creates: "{{ unibody_work_dir }}/nginx-{{ unibody_nginx_version }}/objs/nginx"
