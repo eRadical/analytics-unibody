@@ -23,7 +23,10 @@ http {
         '$status $body_bytes_sent "$http_referer" '
         '"$http_user_agent" "$http_x_forwarded_for"';
 
-    log_format  unibody_analytics '{{ unibody_analytics_nginx_log_format }}';
+{% for log_formats in unibody_analytics_nginx_log_formats %}
+    log_format {{ log_formats['name'] }} '{{ log_formats['format'] }}';
+{% endfor %}
+
     access_log  /var/log/nginx/access.log  main;
 
     server_tokens off;
@@ -75,16 +78,23 @@ http {
         listen       80;
         server_name  _;
 
-        access_log  {{ unibody_analytics_dir }}/latest-events.log unibody_analytics;
+{% for tracker in unibody_analytics_trackers %}
+        ### Tracker Name: {{ tracker['name'] }}
+        location {{ tracker['location_url'] }} {
+            access_log  {{ tracker['logfile'] }} {{ tracker['format_name'] }};
 
-        location / {
-            root   html;
-            index  index.html index.htm;
+{% if tracker['empty_gif'] %}
+            empty_gif;
+{% endif %}
+{% if tracker['return_204'] %}
+            return 204;
+{% endif %}
+
         }
+{% endfor %}
 
 {% if unibody_geo_service %}
-        location {{ unibody_geo_location_url }}
-        {
+        location {{ unibody_geo_location_url }} {
             add_header Access-Control-Allow-Origin *;
             root   /etc/nginx/geo;
             index  find-me.json;
@@ -94,5 +104,9 @@ http {
         }
 {% endif %}
 
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
     }
 }

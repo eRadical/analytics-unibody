@@ -15,7 +15,17 @@ unibody_analytics_rotate_minutes: 10
 unibody_analytics_file_prefix: "events-"
 unibody_analytics_notify_file: "https://unibody-analytics.example.com/collectors-meta"
 
-unibody_analytics_nginx_log_format: "$time_iso8601»$anonymized_ip»$http_referer»$http_user_agent»$geoip2_country_code»$geoip2_state_name»$geoip2_city_name»$geoip2_lat»$geoip2_long»$status»$request_time»$query_string"
+unibody_analytics_nginx_log_formats:
+  - name: unibody_analytics
+    format: "$time_iso8601»$anonymized_ip»$http_referer»$http_user_agent»$geoip2_country_code»$geoip2_state_name»$geoip2_city_name»$geoip2_lat»$geoip2_long»$status»$request_time»$query_string"
+
+unibody_analytics_trackers:
+  - name: Main Tracker
+    location_url: /track
+    logfile: "{{ unibody_analytics_dir }}/latest-events.log"
+    format_name: "{{ unibody_analytics_nginx_log_formats[0].name }}"
+    return_204: true
+    empty_gif: false
 
 unibody_geo_service: true
 unibody_geo_location_url: "/find-me.json"
