@@ -15,6 +15,12 @@ unibody_analytics_rotate_minutes: 10
 unibody_analytics_file_prefix: "events-"
 unibody_analytics_notify_file: "https://unibody-analytics.example.com/collectors-meta"
 
+#unibody_analytics_url:
+# - collector-a1b7f3.example.com
+unibody_analytics_listen_80: no
+#unibody_analytics_ssl_certificate: "/etc/letsencrypt/live/collector-a1b7f3.example.com/fullchain.pem"
+#unibody_analytics_ssl_certificate_key: "/etc/letsencrypt/live/collector-a1b7f3.example.com/privkey.pem"
+
 unibody_analytics_nginx_log_formats:
   - name: unibody_analytics
     format: "$time_iso8601»$anonymized_ip»$http_referer»$http_user_agent»$geoip2_country_code»$geoip2_state_name»$geoip2_city_name»$geoip2_lat»$geoip2_long»$status»$request_time»$query_string"
